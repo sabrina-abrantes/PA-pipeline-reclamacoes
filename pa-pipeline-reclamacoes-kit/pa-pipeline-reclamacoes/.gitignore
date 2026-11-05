@@ -1,0 +1,15 @@
+# Ambiente
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Dados (grandes demais para o GitHub; ficam só na sua máquina)
+data/raw/*.csv
+data/raw/*.zip
+!data/raw/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
