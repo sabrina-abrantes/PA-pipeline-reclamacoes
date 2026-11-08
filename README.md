@@ -38,7 +38,14 @@ docker compose up -d          # sobe o PostgreSQL e cria os schemas raw/staging/
 python src/ingest_raw.py      # R02 – ingestão na camada bruta + log
 python src/profile_raw.py     # R03 – relatório de qualidade (reports/)
 python src/gerar_dicionario.py  # R04 – rascunho do dicionário (docs/)
+
+# 5. Pipeline da Sprint 2
+python src/transform_staging.py   # R05/R06 – limpeza, validação e quarentena (raw → staging)
+python src/load_analytics.py      # R07/R08 – modelo dimensional e carga idempotente (staging → analytics)
 ```
+
+O modelo dimensional está em `docs/modelo_dimensional.png` e os scripts SQL em `sql/`
+(`10_staging.sql`, `20_modelo_dimensional.sql`, `30_carga_analytics.sql`).
 
 ## Estrutura
 
