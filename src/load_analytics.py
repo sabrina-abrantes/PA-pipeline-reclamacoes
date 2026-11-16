@@ -4,8 +4,10 @@ Executa sql/20_modelo_dimensional.sql (DDL) e sql/30_carga_analytics.sql (carga)
 para comprovar a idempotência (mesmos totais na 2ª execução). Gera reports/carga_analytics.md.
 
 Uso:
-    python src/load_analytics.py
+    python src/load_analytics.py            # carga dupla (teste de idempotência)
+    python src/load_analytics.py --uma-vez  # carga única (usada pelo run_pipeline.py)
 """
+import sys
 import time
 from datetime import datetime
 
@@ -26,7 +28,9 @@ def contagens(cur):
     return out
 
 
-def main():
+def main(execucoes_carga=None):
+    if execucoes_carga is None:
+        execucoes_carga = 1 if '--uma-vez' in sys.argv else 2
     conn = conectar()
     cur = conn.cursor()
     sql = lambda nome: (RAIZ / "sql" / nome).read_text(encoding="utf-8")
@@ -36,12 +40,17 @@ def main():
     conn.commit()
 
     execucoes = []
-    for i in (1, 2):
+    for i in range(1, execucoes_carga + 1):
         t0 = time.time()
-        print(f"Carga {i}/2 (sql/30_carga_analytics.sql)...")
+        print(f"Carga {i}/{execucoes_carga} (sql/30_carga_analytics.sql)...")
         cur.execute(sql("30_carga_analytics.sql"))
         conn.commit()
         execucoes.append((round(time.time() - t0, 1), contagens(cur)))
+
+    # views de KPIs (R09) dependem do modelo: recriadas após a carga
+    views = RAIZ / "sql" / "40_views_kpis.sql"
+    if views.exists():
+        cur.execute(views.read_text(encoding="utf-8")); conn.commit()
 
     cur.execute("SELECT count(*) FROM raw.reclamacoes"); raw = cur.fetchone()[0]
     cur.execute("SELECT count(*) FROM staging.reclamacoes"); stg = cur.fetchone()[0]
@@ -54,9 +63,9 @@ def main():
     por_mes = cur.fetchall()
     conn.close()
 
-    (d1, c1), (d2, c2) = execucoes
+    (d1, c1), (d2, c2) = execucoes[0], execucoes[-1]
     fato = c2["fato_reclamacao"]
-    idem = c1 == c2
+    idem = (c1 == c2) if len(execucoes) > 1 else None
     md = [
         "# Carga do modelo dimensional (Sprint 2 – R07/R08)", "",
         f"Gerado em {datetime.now():%d/%m/%Y %H:%M}.", "",
@@ -71,7 +80,8 @@ def main():
         "| Tabela | 1ª execução | 2ª execução |", "| --- | ---: | ---: |",
         *[f"| {t} | {fmt(c1[t])} | {fmt(c2[t])} |" for t in TABELAS],
         f"| Tempo de carga | {d1} s | {d2} s |".replace(".", ","), "",
-        f"Resultado: **{'idempotente – mesmos totais nas duas execuções' if idem else 'ATENÇÃO: totais diferentes'}**.", "",
+        ("Resultado: carga única nesta execução (idempotência testada com `python src/load_analytics.py`)." if idem is None else
+         f"Resultado: **{'idempotente – mesmos totais nas duas execuções' if idem else 'ATENÇÃO: totais diferentes'}**."), "",
         "## Reconciliação", "",
         "| Verificação | Valor |", "| --- | ---: |",
         f"| Linhas na raw | {fmt(raw)} |",
@@ -90,9 +100,10 @@ def main():
     print("\n================ RESUMO ANALYTICS ================")
     for t in TABELAS:
         print(f"{t:<16} {fmt(c2[t]):>12}")
-    print(f"idempotente:     {'SIM' if idem else 'NÃO'}")
+    print(f"idempotente:     {'não testada (carga única)' if idem is None else ('SIM' if idem else 'NÃO')}")
     print(f"raw = fato + quarentena: {'SIM' if raw == fato + qua else 'NÃO'} ({fmt(raw)} = {fmt(fato)} + {fmt(qua)})")
     print(f"tempo de carga:  {d2} s")
+    return {"tempo_carga": d2, "fato": fato, "quarentena": qua, "raw": raw, "idempotente": idem}
     print("Relatório:       reports/carga_analytics.md")
 
 

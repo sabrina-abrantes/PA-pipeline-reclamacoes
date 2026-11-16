@@ -3,12 +3,12 @@
 -- Grão da fato: 1 linha = 1 reclamação finalizada aprovada na staging.
 -- Idempotente: recria as tabelas a cada execução.
 -- =====================================================================
-DROP TABLE IF EXISTS analytics.fato_reclamacao;
-DROP TABLE IF EXISTS analytics.dim_tempo;
-DROP TABLE IF EXISTS analytics.dim_empresa;
-DROP TABLE IF EXISTS analytics.dim_localidade;
-DROP TABLE IF EXISTS analytics.dim_problema;
-DROP TABLE IF EXISTS analytics.dim_consumidor;
+DROP TABLE IF EXISTS analytics.fato_reclamacao CASCADE;   -- CASCADE remove também as views de KPIs
+DROP TABLE IF EXISTS analytics.dim_tempo CASCADE;
+DROP TABLE IF EXISTS analytics.dim_empresa CASCADE;
+DROP TABLE IF EXISTS analytics.dim_localidade CASCADE;
+DROP TABLE IF EXISTS analytics.dim_problema CASCADE;
+DROP TABLE IF EXISTS analytics.dim_consumidor CASCADE;
 
 CREATE TABLE analytics.dim_tempo (
     sk_tempo        INTEGER PRIMARY KEY,           -- aaaammdd
@@ -60,11 +60,11 @@ CREATE TABLE analytics.dim_consumidor (
 
 CREATE TABLE analytics.fato_reclamacao (
     id_reclamacao            BIGSERIAL PRIMARY KEY,
-    sk_tempo                 INTEGER  NOT NULL REFERENCES analytics.dim_tempo,
-    sk_empresa               INTEGER  NOT NULL REFERENCES analytics.dim_empresa,
-    sk_localidade            INTEGER  NOT NULL REFERENCES analytics.dim_localidade,
-    sk_problema              INTEGER  NOT NULL REFERENCES analytics.dim_problema,
-    sk_consumidor            INTEGER  NOT NULL REFERENCES analytics.dim_consumidor,
+    sk_tempo                 INTEGER  NOT NULL,
+    sk_empresa               INTEGER  NOT NULL,
+    sk_localidade            INTEGER  NOT NULL,
+    sk_problema              INTEGER  NOT NULL,
+    sk_consumidor            INTEGER  NOT NULL,
     respondida               BOOLEAN  NOT NULL,
     tempo_resposta           SMALLINT,             -- NULL quando não respondida
     situacao                 TEXT     NOT NULL,
@@ -76,7 +76,8 @@ CREATE TABLE analytics.fato_reclamacao (
     data_ultimo_complemento  DATE,
     colunas_set_disponiveis  BOOLEAN  NOT NULL,    -- a fonte trazia as colunas de set/2025?
     possivel_duplicata       BOOLEAN  NOT NULL,
-    origem_arquivo           TEXT     NOT NULL,    -- rastreabilidade até o CSV
-    origem_linha             BIGINT   NOT NULL,
-    UNIQUE (origem_arquivo, origem_linha)
+    origem_arquivo           TEXT     NOT NULL,
+    origem_linha             BIGINT   NOT NULL     -- rastreabilidade até o CSV
 );
+-- Chaves estrangeiras, unicidade da origem e índices da fato são criados DEPOIS da carga
+-- (sql/30_carga_analytics.sql): validar em lote é bem mais rápido do que linha a linha (R12).

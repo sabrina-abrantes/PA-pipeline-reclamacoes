@@ -1,7 +1,23 @@
 -- =====================================================================
 -- Sprint 2 · R08 – Carga do modelo dimensional a partir da staging
 -- Idempotente: esvazia e recarrega tudo (rodar duas vezes dá o mesmo resultado).
+-- Otimizado na Sprint 3 (R12): restrições e índices da fato são removidos antes da carga
+-- e recriados depois, com mais memória para ordenação/hash.
 -- =====================================================================
+SET work_mem = '256MB';
+SET maintenance_work_mem = '512MB';
+
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS fk_fato_tempo;
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS fk_fato_empresa;
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS fk_fato_localidade;
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS fk_fato_problema;
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS fk_fato_consumidor;
+ALTER TABLE analytics.fato_reclamacao DROP CONSTRAINT IF EXISTS uq_fato_origem;
+DROP INDEX IF EXISTS analytics.ix_fato_tempo;
+DROP INDEX IF EXISTS analytics.ix_fato_empresa;
+DROP INDEX IF EXISTS analytics.ix_fato_problema;
+DROP INDEX IF EXISTS analytics.ix_fato_localidade;
+
 TRUNCATE analytics.fato_reclamacao, analytics.dim_tempo, analytics.dim_empresa,
          analytics.dim_localidade, analytics.dim_problema, analytics.dim_consumidor
          RESTART IDENTITY;
@@ -53,7 +69,16 @@ JOIN analytics.dim_problema   p ON (p.area, p.assunto, p.grupo_problema, p.probl
 JOIN analytics.dim_consumidor c ON (c.sexo, c.faixa_etaria, c.como_comprou_contratou, c.procurou_empresa)
                                  = (s.sexo, s.faixa_etaria, s.como_comprou_contratou, s.procurou_empresa);
 
-CREATE INDEX IF NOT EXISTS ix_fato_tempo    ON analytics.fato_reclamacao (sk_tempo);
-CREATE INDEX IF NOT EXISTS ix_fato_empresa  ON analytics.fato_reclamacao (sk_empresa);
-CREATE INDEX IF NOT EXISTS ix_fato_problema ON analytics.fato_reclamacao (sk_problema);
+-- Restrições e índices recriados em lote
+ALTER TABLE analytics.fato_reclamacao
+    ADD CONSTRAINT fk_fato_tempo      FOREIGN KEY (sk_tempo)      REFERENCES analytics.dim_tempo,
+    ADD CONSTRAINT fk_fato_empresa    FOREIGN KEY (sk_empresa)    REFERENCES analytics.dim_empresa,
+    ADD CONSTRAINT fk_fato_localidade FOREIGN KEY (sk_localidade) REFERENCES analytics.dim_localidade,
+    ADD CONSTRAINT fk_fato_problema   FOREIGN KEY (sk_problema)   REFERENCES analytics.dim_problema,
+    ADD CONSTRAINT fk_fato_consumidor FOREIGN KEY (sk_consumidor) REFERENCES analytics.dim_consumidor,
+    ADD CONSTRAINT uq_fato_origem     UNIQUE (origem_arquivo, origem_linha);
+CREATE INDEX ix_fato_tempo      ON analytics.fato_reclamacao (sk_tempo);
+CREATE INDEX ix_fato_empresa    ON analytics.fato_reclamacao (sk_empresa);
+CREATE INDEX ix_fato_problema   ON analytics.fato_reclamacao (sk_problema);
+CREATE INDEX ix_fato_localidade ON analytics.fato_reclamacao (sk_localidade);
 ANALYZE analytics.fato_reclamacao;

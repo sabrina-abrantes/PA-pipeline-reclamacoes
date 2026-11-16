@@ -44,8 +44,18 @@ python src/transform_staging.py   # R05/R06 – limpeza, validação e quarenten
 python src/load_analytics.py      # R07/R08 – modelo dimensional e carga idempotente (staging → analytics)
 ```
 
+```bash
+# 6. Pipeline da Sprint 3
+python src/kpis.py                 # R09 – views de KPIs (reports/kpis.md)
+python src/reconciliar_boletim.py  # R10 – reconciliação com o Boletim Consumidor.gov.br 2025
+python src/analise_descritiva.py   # R11 – gráficos e análise (reports/analise/)
+
+# Pipeline completo com um único comando (R12)
+python src/run_pipeline.py         # ingestão → staging → modelo → KPIs → reconciliação → análise
+```
+
 O modelo dimensional está em `docs/modelo_dimensional.png` e os scripts SQL em `sql/`
-(`10_staging.sql`, `20_modelo_dimensional.sql`, `30_carga_analytics.sql`).
+(`10_staging.sql`, `20_modelo_dimensional.sql`, `30_carga_analytics.sql`, `40_views_kpis.sql`).
 
 ## Estrutura
 
@@ -62,5 +72,5 @@ src/           código do pipeline
 ## Status
 
 - [x] Sprint 1 – Fundação e ingestão (R01–R04)
-- [ ] Sprint 2 – Tratamento, modelagem e carga (R05–R08)
+- [x] Sprint 2 – Tratamento, modelagem e carga (R05–R08)
 - [ ] Sprint 3 – Indicadores e análise (R09–R12)
