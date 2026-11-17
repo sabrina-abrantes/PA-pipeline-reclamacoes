@@ -24,6 +24,10 @@ from config import LOGS_DIR, REPORTS_DIR
 META_MIN = 30
 
 
+def br(v):
+    return f"{v:.1f}".replace(".", ",")
+
+
 def main():
     sys.argv = sys.argv[:1]  # os scripts internos não recebem argumentos
     etapas = [
@@ -48,8 +52,8 @@ def main():
         "# Execução do pipeline ponta a ponta (Sprint 3 – R12)", "",
         f"Executado em {inicio:%d/%m/%Y %H:%M} com `python src/run_pipeline.py`.", "",
         "| Etapa | Tempo (s) | Tempo (min) |", "| --- | ---: | ---: |",
-        *[f"| {n} | {t:.1f} | {t / 60:.1f} |".replace(".", ",") for n, t in tempos],
-        f"| **Total** | **{total:.1f}** | **{total / 60:.1f}** |".replace(".", ","), "",
+        *[f"| {n} | {br(t)} | {br(t / 60)} |" for n, t in tempos],
+        f"| **Total** | **{br(total)}** | **{br(total / 60)}** |", "",
         f"Meta do objetivo SMART: menos de {META_MIN} minutos → **{'atingida' if dentro else 'NÃO atingida'}**.", "",
     ]
     REPORTS_DIR.mkdir(exist_ok=True)
