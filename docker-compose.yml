@@ -3,6 +3,7 @@ services:
     image: postgres:16
     container_name: pa_postgres
     restart: unless-stopped
+    shm_size: 1gb   # memória compartilhada para consultas paralelas com milhões de linhas (padrão do Docker: 64 MB)
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}

@@ -1,6 +1,6 @@
 # Carga do modelo dimensional (Sprint 2 – R07/R08)
 
-Gerado em 08/11/2026 20:52.
+Gerado em 16/11/2026 21:19.
 
 ## Modelo (esquema estrela)
 
@@ -21,9 +21,9 @@ Gerado em 08/11/2026 20:52.
 | dim_problema | 4.414 | 4.414 |
 | dim_consumidor | 359 | 359 |
 | fato_reclamacao | 2.328.857 | 2.328.857 |
-| Tempo de carga | 827,7 s | 809,6 s |
+| Tempo de carga | 700,2 s | 700,2 s |
 
-Resultado: **idempotente – mesmos totais nas duas execuções**.
+Resultado: carga única nesta execução (idempotência testada com `python src/load_analytics.py`).
 
 ## Reconciliação
 

@@ -1,6 +1,6 @@
 # Validação da camada staging (Sprint 2 – R05/R06)
 
-Gerado em 08/11/2026 18:09. Tempo de processamento: 302.6 s.
+Gerado em 16/11/2026 21:08. Tempo de processamento: 311.8 s.
 
 ## Rastreabilidade (meta: 100% dos registros carregados ou em quarentena)
 

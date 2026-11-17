@@ -82,3 +82,7 @@ CREATE INDEX ix_fato_empresa    ON analytics.fato_reclamacao (sk_empresa);
 CREATE INDEX ix_fato_problema   ON analytics.fato_reclamacao (sk_problema);
 CREATE INDEX ix_fato_localidade ON analytics.fato_reclamacao (sk_localidade);
 ANALYZE analytics.fato_reclamacao;
+
+-- volta a memória da sessão ao padrão para as consultas seguintes
+RESET work_mem;
+RESET maintenance_work_mem;
